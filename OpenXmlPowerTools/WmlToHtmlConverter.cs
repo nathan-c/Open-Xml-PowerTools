@@ -2239,6 +2239,7 @@ namespace OpenXmlPowerTools
 
         private static readonly HashSet<string> UnknownFonts = new HashSet<string>();
         private static HashSet<string> _knownFamilies;
+        private static readonly object _knownFamiliesLock = new object();
 
         private static HashSet<string> KnownFamilies
         {
@@ -2246,10 +2247,16 @@ namespace OpenXmlPowerTools
             {
                 if (_knownFamilies == null)
                 {
-                    _knownFamilies = new HashSet<string>();
-                    var families = FontFamily.Families;
-                    foreach (var fam in families)
-                        _knownFamilies.Add(fam.Name);
+                    lock(_knownFamiliesLock)
+                    {
+                        if (_knownFamilies == null)
+                        {
+                            _knownFamilies = new HashSet<string>();
+                            var families = FontFamily.Families;
+                            foreach (var fam in families)
+                                _knownFamilies.Add(fam.Name);
+                        }
+                    }
                 }
                 return _knownFamilies;
             }

@@ -630,18 +630,32 @@ namespace OpenXmlPowerTools
     public static class WordprocessingMLUtil
     {
         private static HashSet<string> UnknownFonts = new HashSet<string>();
-        private static HashSet<string> KnownFamilies = null;
+        private static HashSet<string> _knownFamilies;
+        private static readonly object _knownFamiliesLock = new object();
+
+        private static HashSet<string> KnownFamilies
+        {
+            get
+            {
+                if (_knownFamilies == null)
+                {
+                    lock(_knownFamiliesLock)
+                    {
+                        if (_knownFamilies == null)
+                        {
+                            _knownFamilies = new HashSet<string>();
+                            var families = FontFamily.Families;
+                            foreach (var fam in families)
+                                _knownFamilies.Add(fam.Name);
+                        }
+                    }
+                }
+                return _knownFamilies;
+            }
+        }
 
         public static int CalcWidthOfRunInTwips(XElement r)
         {
-            if (KnownFamilies == null)
-            {
-                KnownFamilies = new HashSet<string>();
-                var families = FontFamily.Families;
-                foreach (var fam in families)
-                    KnownFamilies.Add(fam.Name);
-            }
-
             var fontName = (string)r.Attribute(PtOpenXml.pt + "FontName");
             if (fontName == null)
                 fontName = (string)r.Ancestors(W.p).First().Attribute(PtOpenXml.pt + "FontName");
